@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>FatRat extension settings</title>
+  <link rel="stylesheet" href="options.css">
+  <script type="module" src="options.js"></script>
+</head>
+<body>
+  <h1><img src="icons/48.png" alt=""> FatRat</h1>
+  <p id="register-notice" class="notice" hidden>
+    A FatRat web interface asked to be connected. Check that the address below is yours, then click Save.
+    <span id="register-current" hidden>This replaces <code id="current-url"></code>.</span>
+  </p>
+  <form id="form">
+    <label for="instance">FatRat web interface address</label>
+    <input id="instance" type="text" placeholder="http://nas:2233/" autocomplete="url" spellcheck="false">
+    <button type="submit">Save</button>
+  </form>
+  <p id="status" role="status"></p>
+  <p class="hint">Right-click a link and choose <strong>Send link to FatRat</strong>. The link opens in FatRat's New Transfer dialog; nothing is downloaded until you click Add there. Allowing access to the address lets the extension reuse a FatRat tab that is already open instead of opening a new one.</p>
+</body>
+</html>
