@@ -20,7 +20,7 @@ Store links will be added once the extension is published. Until then, load it u
 ### Connect it to FatRat
 
 Either open the FatRat web UI, go to Settings, Web Interface and click "Set up the browser
-extension...", or type the web UI's address into the extension's options page.
+extension...", or type the web UI's address into the extension's options page. The extension sends every link to the registered address, so only confirm an address that is your own FatRat; a malicious setup link could otherwise redirect your links.
 
 ## Contracts
 

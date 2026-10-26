@@ -13,16 +13,30 @@ export async function sendLink(api, linkUrl, sourceTab) {
     return 'unconfigured';
   }
   const target = buildAddUrl(instance, [linkUrl]);
-  // Without the host permission the url filter is ignored and tab URLs are hidden; the
-  // isInstanceTabUrl check then rejects every tab and we fall back to a new one.
+  // Without the host permission the browser hides tab URLs (the url filter then matches nothing),
+  // so isInstanceTabUrl rejects every tab and we fall back to a new one.
   const tabs = await api.tabs.query({ url: hostPermissionPattern(instance) });
   const tab = pickInstanceTab(tabs.filter((t) => isInstanceTabUrl(instance, t.url)));
   if (tab) {
-    await api.tabs.update(tab.id, { url: target, active: true });
-    await api.windows.update(tab.windowId, { focused: true });
-    return 'reused';
+    // Keep the tab's own page (e.g. index.html) so only the fragment changes and nothing reloads.
+    const reuseTarget = buildAddUrl(tab.url.split('#')[0], [linkUrl]);
+    try {
+      await api.tabs.update(tab.id, { url: reuseTarget, active: true });
+      await api.windows.update(tab.windowId, { focused: true });
+      return 'reused';
+    } catch {
+      // The tab was closed between the query and the update.
+    }
   }
-  const placement = sourceTab ? { index: sourceTab.index + 1, openerTabId: sourceTab.id } : {};
-  await api.tabs.create({ url: target, ...placement });
+  // Chrome reports non-tab contexts as id -1. A child tab is placed next to its opener by the browser.
+  if (sourceTab?.id >= 0) {
+    try {
+      await api.tabs.create({ url: target, openerTabId: sourceTab.id });
+      return 'opened';
+    } catch {
+      // Firefox rejects an opener in another window (e.g. a link in a popup).
+    }
+  }
+  await api.tabs.create({ url: target });
   return 'opened';
 }

@@ -14,6 +14,10 @@ describe('normalizeInstanceUrl', () => {
   it('treats a path without a trailing slash as a directory', () => {
     expect(normalizeInstanceUrl('https://h/fatrat')).toBe('https://h/fatrat/');
   });
+  it('strips only a whole index.html path segment', () => {
+    expect(normalizeInstanceUrl('http://h/myindex.html')).toBe('http://h/myindex.html/');
+    expect(normalizeInstanceUrl('http://h/my/index.html')).toBe('http://h/my/');
+  });
   it('rejects non-http schemes and garbage', () => {
     expect(normalizeInstanceUrl('ftp://h/')).toBeNull();
     expect(normalizeInstanceUrl('javascript:alert(1)')).toBeNull();

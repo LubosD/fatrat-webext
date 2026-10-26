@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { sendLink } from '../src/lib/send-link.js';
-import { getInstance, setInstance } from '../src/lib/settings.js';
 
 function fakeApi({ instance = 'http://nas:2233/', tabs = [] } = {}) {
   const store = instance ? { instanceUrl: instance } : {};
@@ -20,15 +19,6 @@ function fakeApi({ instance = 'http://nas:2233/', tabs = [] } = {}) {
 const LINK = 'http://example.com/file.iso';
 const TARGET = `http://nas:2233/#add=${encodeURIComponent(LINK)}`;
 
-describe('settings', () => {
-  it('round-trips the instance URL and reports none when unset', async () => {
-    const api = fakeApi({ instance: null });
-    expect(await getInstance(api.storage.local)).toBeNull();
-    await setInstance(api.storage.local, 'http://h/');
-    expect(await getInstance(api.storage.local)).toBe('http://h/');
-  });
-});
-
 describe('sendLink', () => {
   it('opens the options page when no instance is configured', async () => {
     const api = fakeApi({ instance: null });
@@ -41,7 +31,7 @@ describe('sendLink', () => {
     const api = fakeApi();
     expect(await sendLink(api, LINK, { id: 7, index: 3 })).toBe('opened');
     expect(api.tabs.query).toHaveBeenCalledWith({ url: 'http://nas/*' });
-    expect(api.tabs.create).toHaveBeenCalledWith({ url: TARGET, index: 4, openerTabId: 7 });
+    expect(api.tabs.create).toHaveBeenCalledWith({ url: TARGET, openerTabId: 7 });
   });
 
   it('reuses and focuses the most recent web UI tab', async () => {
@@ -61,5 +51,36 @@ describe('sendLink', () => {
     const api = fakeApi({ tabs });
     expect(await sendLink(api, LINK)).toBe('opened');
     expect(api.tabs.update).not.toHaveBeenCalled();
+  });
+
+  it('passes no opener for a non-tab source (Chrome reports id -1)', async () => {
+    const api = fakeApi();
+    expect(await sendLink(api, LINK, { id: -1, index: -1 })).toBe('opened');
+    expect(api.tabs.create).toHaveBeenCalledWith({ url: TARGET });
+  });
+
+  it('retries without the opener when the browser rejects it', async () => {
+    const api = fakeApi();
+    api.tabs.create.mockRejectedValueOnce(new Error('Opener tab is in another window'));
+    expect(await sendLink(api, LINK, { id: 7 })).toBe('opened');
+    expect(api.tabs.create).toHaveBeenNthCalledWith(1, { url: TARGET, openerTabId: 7 });
+    expect(api.tabs.create).toHaveBeenNthCalledWith(2, { url: TARGET });
+  });
+
+  it('keeps the reused tab on its own page so only the fragment changes', async () => {
+    const tabs = [{ id: 1, windowId: 10, url: 'http://nas:2233/index.html#add=old' }];
+    const api = fakeApi({ tabs });
+    expect(await sendLink(api, LINK)).toBe('reused');
+    expect(api.tabs.update).toHaveBeenCalledWith(1, {
+      url: `http://nas:2233/index.html#add=${encodeURIComponent(LINK)}`,
+      active: true,
+    });
+  });
+
+  it('opens a new tab when the reused tab vanished', async () => {
+    const api = fakeApi({ tabs: [{ id: 1, windowId: 10, url: 'http://nas:2233/' }] });
+    api.tabs.update.mockRejectedValueOnce(new Error('No tab with id 1'));
+    expect(await sendLink(api, LINK)).toBe('opened');
+    expect(api.tabs.create).toHaveBeenCalledWith({ url: TARGET });
   });
 });

@@ -17,7 +17,7 @@ export function normalizeInstanceUrl(input) {
   url.password = '';
   url.search = '';
   url.hash = '';
-  url.pathname = url.pathname.replace(/index\.html$/, '');
+  url.pathname = url.pathname.replace(/\/index\.html$/, '/');
   if (!url.pathname.endsWith('/')) url.pathname += '/';
   return url.href;
 }
