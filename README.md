@@ -9,6 +9,8 @@ The extension never calls FatRat's API and never stores credentials. It only nav
 
 ## Install
 
+Requires FatRat newer than 1.3.1 (the first release whose web UI accepts links from the extension).
+
 Store links will be added once the extension is published. Until then, load it unpacked:
 
 - Chrome: `npm ci && npm run build`, then open `chrome://extensions`, enable Developer mode, choose
