@@ -1,0 +1,18 @@
+{
+  "name": "fatrat-webext",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Send links to the FatRat download manager from the browser's context menu.",
+  "scripts": {
+    "test": "vitest run",
+    "build": "node scripts/build.mjs",
+    "lint": "npm run build && web-ext lint --source-dir dist/firefox",
+    "package": "npm run build && web-ext build -s dist/chrome -a dist/packages -n fatrat-chrome-{version}.zip --overwrite-dest && web-ext build -s dist/firefox -a dist/packages -n fatrat-firefox-{version}.zip --overwrite-dest",
+    "start:firefox": "npm run build && web-ext run -s dist/firefox"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.8",
+    "web-ext": "^8.3.0"
+  }
+}
